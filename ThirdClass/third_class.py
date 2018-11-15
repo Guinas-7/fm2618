@@ -35,4 +35,3 @@ dict_helms = {}
 
 dict_inventory = {"str":10,"dex":7,"hp":100,"sword":"excalibur","helm":dict_helms["greathelm2"]}
 
-
