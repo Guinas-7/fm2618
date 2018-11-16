@@ -1,5 +1,5 @@
 inventrory = {}
-items = ("dagger", "BluePotion","GoldenFeather", "manuscript")
+items = ("dagger", "bluepotion","goldenfeather", "manuscript")
 #0=fly ability  1=stealth
 skills = [0,0]
 game_over = False
@@ -23,10 +23,10 @@ while not game_over:
             userinputitems = userinput.split(" ")
             for i in userinputitems:
                 if i in items:
-                    if i ==  items(1) & skills[0]<5:
-                        skills[0] =+ 1
-                    if i == items(2) & skills[1]<5:
-                        skills[1] = + 1
+                    if i == items[1] and  skills[0]<5:
+                        skills[0] = skills[0] + 1
+                    if i == items[2] and skills[1]<5:
+                        skills[1] = skills[1]+ 1
                     if i in inventrory:
                         inventrory[i] = inventrory.get(i) + 1
                     else:
