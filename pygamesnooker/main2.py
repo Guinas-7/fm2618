@@ -18,7 +18,7 @@ tabledimentions = (50,150,950,650)
 wallwith = 25
 
 
-ballradius = 18
+ballradius = 15
 balldrag = 0.01
 
 holeradius = 2*ballradius
@@ -143,20 +143,30 @@ holes = [hole(tabledimentions[0] - 7, tabledimentions[1] - 7, 4),
          hole(tablecenterx, tabledimentions[3] + 10, -7)
          ]
 
-lines = [#LU
+lines = [# LU
     line(tabledimentions[0], tabledimentions[1] - holeradius, tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith),
-    line(tabledimentions[0] - holeradius, tabledimentions[1], tabledimentions[0] + wallwith, tabledimentions[1] + holeradius + wallwith),
-         #LD
-    line(tabledimentions[0], tabledimentions[3] + holeradius, tabledimentions[0] + holeradius + wallwith, tabledimentions[3] - wallwith),
-    line(tabledimentions[0] - holeradius, tabledimentions[3], tabledimentions[0] + wallwith, tabledimentions[3] - holeradius - wallwith),
-         #RU
+    line(tablecenterx, tabledimentions[1] - holeradius, tablecenterx - holeradius, tabledimentions[1] + wallwith),
+    line(tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith, tablecenterx - holeradius, tabledimentions[1] + wallwith),
+         # RU
+    line(tablecenterx, tabledimentions[1] - holeradius, tablecenterx + holeradius, tabledimentions[1] + wallwith),
     line(tabledimentions[2], tabledimentions[1] - holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
+    line(tablecenterx + holeradius, tabledimentions[1] + wallwith, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
+        # L
+    line(tabledimentions[0] - holeradius, tabledimentions[3], tabledimentions[0] + wallwith,tabledimentions[3] - holeradius - wallwith),
+    line(tabledimentions[0] - holeradius, tabledimentions[1], tabledimentions[0] + wallwith, tabledimentions[1] + holeradius + wallwith),
+    line(tabledimentions[0] + wallwith,tabledimentions[3] - holeradius - wallwith, tabledimentions[0] + wallwith,tabledimentions[1] + holeradius + wallwith),
+        # LD
+    line(tablecenterx, tabledimentions[3] + holeradius, tablecenterx - holeradius, tabledimentions[3] - wallwith),
+    line(tabledimentions[0], tabledimentions[3] + holeradius, tabledimentions[0] + holeradius + wallwith,tabledimentions[3] - wallwith),
+    line(tablecenterx - holeradius, tabledimentions[3] - wallwith, tabledimentions[0] + holeradius + wallwith,tabledimentions[3] - wallwith),
+        # R
     line(tabledimentions[2] + holeradius, tabledimentions[1], tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith),
-         #RD
-    line(tabledimentions[2], tabledimentions[3] + holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith),
     line(tabledimentions[2] + holeradius, tabledimentions[3], tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
-
-
+    line(tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith, tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
+        # RD
+    line(tabledimentions[2], tabledimentions[3] + holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith),
+    line(tablecenterx, tabledimentions[3] + holeradius, tablecenterx + holeradius, tabledimentions[3] - wallwith),
+    line(tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith, tablecenterx + holeradius, tabledimentions[3] - wallwith)
          ]
 
 
