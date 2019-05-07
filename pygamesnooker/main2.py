@@ -199,7 +199,6 @@ def ballinhole():
             if ((ball.xpos - hole.xpos) ** 2) + ((ball.ypos - hole.ypos) ** 2) <= (ballradius+ballradius ) ** 2:
                 if ball != balls[0]:
                     balls.pop(balls.index(ball))
-                    print("hi")
                 else:
                     ball.xpos = whiteballstart
                     ball.ypos = tablecentery
