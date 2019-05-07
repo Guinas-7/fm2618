@@ -1,10 +1,11 @@
 import pygame, sys
 from time import sleep
 from pygame.locals import *
-import random,math
+import random,math,itertools
 pygame.init()
 clock = pygame.time.Clock()
 pygame.display.set_caption("Billiards")
+
 
 timer=0
 collisiondelay = 500
@@ -27,6 +28,7 @@ holeradius = 2*ballradius
 tablecenterx = (tabledimentions[2]-tabledimentions[0])/2 + tabledimentions[0]
 tablecentery = (tabledimentions[3]-tabledimentions[1])/2 + tabledimentions[1]
 triagleoriginx = tablecenterx+(tabledimentions[2]-tablecenterx)/2
+whiteballstart = 200
 
 
 class ball:
@@ -38,6 +40,7 @@ class ball:
         self.ypos = y
         self.angle = angle
         self.speed = speed
+        self.lastcol =100
 
     def draw(self):
         pygame.draw.circle(screen, self.color, (int(self.xpos), int(self.ypos)), ballradius + 1,0)
@@ -88,12 +91,20 @@ class wall:
 
 
 class line:
-    def __init__(self, ix, iy, fx, fy):
+    def __init__(self, angle, ix, iy, fx, fy):
         self.initialx = ix
         self.initialy = iy
         self.finalx = fx
         self.finaly = fy
         self.color = (255,255,255)
+        self.type = angle
+        if fx!=ix:
+            self.angle = -math.atan((fy-iy)/(fx-ix))
+        self.A = iy-fy
+        self.B = fx-ix
+        self.C = ix*fy - fx*iy
+
+
 
     def draw(self):
         pygame.draw.line(screen, self.color, [self.initialx, self.initialy], [self.finalx, self.finaly], 1)
@@ -111,7 +122,7 @@ class hole:
         pygame.draw.circle(screen, (0, 50, 0), (int(self.xpos), int(self.ypos)), self.radius, 0)
 
 
-balls = [ball((255, 255, 255), "white", 0, 0, 400, tablecentery),
+balls = [ball((255, 255, 255), "white", 0, 0, whiteballstart, tablecentery),
          ball((  0, 200, 200), "other", 0, 0, triagleoriginx + 1 * ballradius - 1, tablecentery),
          ball((  0,   0, 200), "other", 0, 0, triagleoriginx + 3 * ballradius - 2, tablecentery + ballradius + 2),
          ball((150,   0,   0), "other", 0, 0, triagleoriginx + 3 * ballradius - 2, tablecentery - ballradius - 2),
@@ -135,47 +146,93 @@ walls = [wall(tabledimentions[0],tabledimentions[1],tabledimentions[2],wallwith,
          wall(tabledimentions[0],tabledimentions[1],wallwith,tabledimentions[3]-tabledimentions[1],"vertical"),
          wall(tabledimentions[2]-wallwith,tabledimentions[1],wallwith,tabledimentions[3]-tabledimentions[1],"vertical")]
 
-holes = [hole(tabledimentions[0] - 7, tabledimentions[1] - 7, 4),
-         hole(tabledimentions[0] - 7, tabledimentions[3] + 7, 4),
-         hole(tabledimentions[2] + 7, tabledimentions[1] - 7, 4),
-         hole(tabledimentions[2] + 7, tabledimentions[3] + 7, 4),
+holes = [hole(tabledimentions[0] - 7, tabledimentions[1] - 7, 12),
+         hole(tabledimentions[0] - 7, tabledimentions[3] + 7, 12),
+         hole(tabledimentions[2] + 7, tabledimentions[1] - 7, 12),
+         hole(tabledimentions[2] + 7, tabledimentions[3] + 7, 12),
          hole(tablecenterx, tabledimentions[1] - 10, -7),
          hole(tablecenterx, tabledimentions[3] + 10, -7)
          ]
 
-lines = [# LU
-    line(tabledimentions[0], tabledimentions[1] - holeradius, tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith),
-    line(tablecenterx, tabledimentions[1] - holeradius, tablecenterx - holeradius, tabledimentions[1] + wallwith),
-    line(tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith, tablecenterx - holeradius, tabledimentions[1] + wallwith),
-         # RU
-    line(tablecenterx, tabledimentions[1] - holeradius, tablecenterx + holeradius, tabledimentions[1] + wallwith),
-    line(tabledimentions[2], tabledimentions[1] - holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
-    line(tablecenterx + holeradius, tabledimentions[1] + wallwith, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
+lines = [
+        # LU
+    line("A", tabledimentions[0], tabledimentions[1] - holeradius, tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith),
+    line("B", tablecenterx - (holeradius-wallwith/2), tabledimentions[1], tablecenterx - holeradius, tabledimentions[1] + wallwith),
+    line("H", tabledimentions[0] + holeradius + wallwith, tabledimentions[1] + wallwith, tablecenterx - holeradius, tabledimentions[1] + wallwith),
+        # RU
+    line("A", tablecenterx + (holeradius-wallwith/2), tabledimentions[1], tablecenterx + holeradius, tabledimentions[1] + wallwith),
+    line("B", tabledimentions[2], tabledimentions[1] - holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
+    line("H", tablecenterx + holeradius, tabledimentions[1] + wallwith, tabledimentions[2] - holeradius - wallwith, tabledimentions[1] + wallwith),
         # L
-    line(tabledimentions[0] - holeradius, tabledimentions[3], tabledimentions[0] + wallwith,tabledimentions[3] - holeradius - wallwith),
-    line(tabledimentions[0] - holeradius, tabledimentions[1], tabledimentions[0] + wallwith, tabledimentions[1] + holeradius + wallwith),
-    line(tabledimentions[0] + wallwith,tabledimentions[3] - holeradius - wallwith, tabledimentions[0] + wallwith,tabledimentions[1] + holeradius + wallwith),
+    line("B", tabledimentions[0] - holeradius, tabledimentions[3], tabledimentions[0] + wallwith, tabledimentions[3] - holeradius - wallwith),
+    line("C", tabledimentions[0] - holeradius, tabledimentions[1], tabledimentions[0] + wallwith, tabledimentions[1] + holeradius + wallwith),
+    line("V", tabledimentions[0] + wallwith, tabledimentions[3] - holeradius - wallwith, tabledimentions[0] + wallwith, tabledimentions[1] + holeradius + wallwith),
         # LD
-    line(tablecenterx, tabledimentions[3] + holeradius, tablecenterx - holeradius, tabledimentions[3] - wallwith),
-    line(tabledimentions[0], tabledimentions[3] + holeradius, tabledimentions[0] + holeradius + wallwith,tabledimentions[3] - wallwith),
-    line(tablecenterx - holeradius, tabledimentions[3] - wallwith, tabledimentions[0] + holeradius + wallwith,tabledimentions[3] - wallwith),
+    line("C", tablecenterx - (holeradius-wallwith/2), tabledimentions[3], tablecenterx - holeradius, tabledimentions[3] - wallwith),
+    line("D", tabledimentions[0], tabledimentions[3] + holeradius, tabledimentions[0] + holeradius + wallwith, tabledimentions[3] - wallwith),
+    line("H", tablecenterx - holeradius, tabledimentions[3] - wallwith, tabledimentions[0] + holeradius + wallwith, tabledimentions[3] - wallwith),
         # R
-    line(tabledimentions[2] + holeradius, tabledimentions[1], tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith),
-    line(tabledimentions[2] + holeradius, tabledimentions[3], tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
-    line(tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith, tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
+    line("D", tabledimentions[2] + holeradius, tabledimentions[1], tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith),
+    line("A", tabledimentions[2] + holeradius, tabledimentions[3], tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
+    line("V", tabledimentions[2] - wallwith, tabledimentions[1] + holeradius + wallwith, tabledimentions[2] - wallwith, tabledimentions[3] - holeradius - wallwith),
         # RD
-    line(tabledimentions[2], tabledimentions[3] + holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith),
-    line(tablecenterx, tabledimentions[3] + holeradius, tablecenterx + holeradius, tabledimentions[3] - wallwith),
-    line(tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith, tablecenterx + holeradius, tabledimentions[3] - wallwith)
+    line("C", tabledimentions[2], tabledimentions[3] + holeradius, tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith),
+    line("D", tablecenterx + (holeradius-wallwith/2), tabledimentions[3], tablecenterx + holeradius, tabledimentions[3] - wallwith),
+    line("H", tabledimentions[2] - holeradius - wallwith, tabledimentions[3] - wallwith, tablecenterx + holeradius, tabledimentions[3] - wallwith)
          ]
 
 
 def collisiondetect():
-    for i in range(len(balls)):
-            for j in range(i+1, len(balls)):
-                    if ((balls[i].xpos-balls[j].xpos)**2)+((balls[i].ypos-balls[j].ypos)**2) <= (ballradius+ballradius)**2:
-                        balls[i].ballcolision(j)
+
+    for ball_ball_combination in itertools.combinations(balls,2):
+        if ((ball_ball_combination[0].xpos - ball_ball_combination[1].xpos) ** 2) + ((ball_ball_combination[0].ypos - ball_ball_combination[1].ypos) ** 2) <= (ballradius + ballradius) ** 2:
+            if ball_ball_combination[0].lastcol != balls.index(ball_ball_combination[1]) or ball_ball_combination[1].lastcol != balls.index(ball_ball_combination[0]):
+                ball_ball_combination[0].lastcol = balls.index(ball_ball_combination[1])
+                ball_ball_combination[1].lastcol = balls.index(ball_ball_combination[0])
+                ball_ball_combination[0].ballcolision(balls.index(ball_ball_combination[1]))
+
     return
+
+def ballinhole():
+    for ball in balls:
+        for hole in holes:
+            if ((ball.xpos - hole.xpos) ** 2) + ((ball.ypos - hole.ypos) ** 2) <= (ballradius+ballradius ) ** 2:
+                if ball != balls[0]:
+                    balls.pop(balls.index(ball))
+                    print("hi")
+                else:
+                    ball.xpos = whiteballstart
+                    ball.ypos = tablecentery
+                    ball.speed = 0
+
+def collisionballwall():
+    for ball in balls:
+        for line in lines:
+            if line.type == "A":
+                if ((abs(line.A * ball.xpos + line.B * ball.ypos + line.C)) / math.sqrt(line.A * line.A + line.B * line.B) <= ballradius) and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly):
+                    ball.angle = math.degrees(-line.angle - math.radians(ball.angle))
+            if line.type == "B":
+                if ((abs(line.A * ball.xpos + line.B * ball.ypos + line.C)) / math.sqrt(line.A * line.A + line.B * line.B) <= ballradius) and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly):
+                    ball.angle = math.degrees(-line.angle - math.radians(ball.angle))
+            if line.type == "C":
+                if ((abs(line.A * ball.xpos + line.B * ball.ypos + line.C)) / math.sqrt(line.A * line.A + line.B * line.B) <= ballradius) and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly):
+                    ball.angle = math.degrees(-line.angle - math.radians(ball.angle))
+            if line.type == "D":
+                if ((abs(line.A * ball.xpos + line.B * ball.ypos + line.C)) / math.sqrt(line.A * line.A + line.B * line.B) <= ballradius) and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly):
+                    ball.angle = math.degrees(-line.angle - math.radians(ball.angle))
+
+            if line.type == "V":
+                if (ball.xpos - ballradius <= line.initialx and ball.xpos > line.initialx and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly)) \
+                        or (ball.xpos + ballradius >= line.initialx and ball.xpos < line.initialx and (line.initialy < ball.ypos <line.finaly or line.initialy > ball.ypos >line.finaly)):
+                    ball.lastcol = 100
+                    ball.angle = math.degrees(math.pi - math.radians(ball.angle))
+
+            if line.type == "H":
+                if (ball.ypos - ballradius <= line.initialy and ball.ypos > line.initialy and (line.initialx < ball.xpos <line.finalx or line.initialx > ball.xpos >line.finalx))\
+                        or (ball.ypos + ballradius >= line.initialy and ball.ypos < line.initialy and (line.initialx < ball.xpos <line.finalx or line.initialx > ball.xpos >line.finalx)):
+                    ball.lastcol = 100
+                    ball.angle = math.degrees(-math.radians(ball.angle))
+
 
 
 def isballmoving():
@@ -188,16 +245,19 @@ def isballmoving():
 
 
 def movewhiteball():
+    i = 0
+    while i < len(balls):
+        balls[i].lastcol=100
+        i += 1
     xmouse = pygame.mouse.get_pos()[0]
     ymouse = pygame.mouse.get_pos()[1]
-    distance = math.sqrt(((balls[0].xpos - xmouse) ** 2) + ((balls[0].ypos - ymouse) ** 2))
+    pygame.draw.line(screen, (0,0,0), [xmouse, ymouse], [balls[0].xpos, balls[0].ypos], 2)
     if pygame.mouse.get_pressed()[0]:
         balls[0].angle = math.degrees(math.atan2(balls[0].ypos - ymouse,balls[0].xpos - xmouse))
         distance = math.sqrt(((balls[0].xpos - xmouse) ** 2) + ((balls[0].ypos - ymouse) ** 2))
         if distance > 150:
             distance = 150
         balls[0].speed = distance/30
-    print(distance)
 
 
 while True:
@@ -209,10 +269,6 @@ while True:
 
     i = 0
     while i < len(balls):
-        if balls[i].xpos-ballradius <= tabledimentions[0] or balls[i].xpos+ballradius >= tabledimentions[2]:
-            balls[i].angle = math.degrees(math.pi - math.radians(balls[i].angle))
-        if balls[i].ypos-ballradius <= tabledimentions[1] or balls[i].ypos+ballradius >= tabledimentions[3]:
-            balls[i].angle = math.degrees(-math.radians(balls[i].angle))
         balls[i].draw()
         balls[i].move()
         balls[i].slowdown()
@@ -234,10 +290,14 @@ while True:
         i += 1
 
 
+
     if isballmoving():
         collisiondetect()
+        ballinhole()
+        collisionballwall()
     else:
         movewhiteball()
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
